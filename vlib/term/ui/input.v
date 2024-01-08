@@ -140,6 +140,7 @@ pub enum EventType {
 	mouse_scroll
 	key_down
 	resized
+	key_up
 }
 
 @[flag]
@@ -180,6 +181,9 @@ pub mut:
 	frame_count   u64
 	window_width  int
 	window_height int
+	input_devices map[string]int = {
+		"STDIN" : C.STDIN_FILENO
+	}
 }
 
 pub struct Config {

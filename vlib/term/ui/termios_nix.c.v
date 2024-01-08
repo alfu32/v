@@ -227,14 +227,16 @@ fn (mut ctx Context) termios_loop() {
 		}
 		if !ctx.paused {
 			sw.restart()
-			if ctx.cfg.event_fn != none {
-				unsafe {
-					len := C.read(C.STDIN_FILENO, &u8(ctx.read_buf.data) + ctx.read_buf.len,
-						ctx.read_buf.cap - ctx.read_buf.len)
-					ctx.resize_arr(ctx.read_buf.len + len)
-				}
-				if ctx.read_buf.len > 0 {
-					ctx.parse_events()
+			for _,idev in ctx.input_devices{
+				if ctx.cfg.event_fn != none {
+					unsafe {
+						len := C.read(idev, &u8(ctx.read_buf.data) + ctx.read_buf.len,
+							ctx.read_buf.cap - ctx.read_buf.len)
+						ctx.resize_arr(ctx.read_buf.len + len)
+					}
+					if ctx.read_buf.len > 0 {
+						ctx.parse_events()
+					}
 				}
 			}
 			ctx.frame()
