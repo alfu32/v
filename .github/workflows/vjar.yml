@@ -53,11 +53,21 @@ jobs:
           CC: ${{ matrix.cc }}
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
-            MACOS_BOOTSTRAP_CFLAGS="-include $GITHUB_WORKSPACE/tools/vjar/macos_bootstrap_semaphore.h"
-            VJOBS=1 V3_FASTC_NO_PARALLEL=1 make -j2 \
-              VFLAGS="-new-compiler -no-parallel" \
-              CFLAGS= \
-              BOOTSTRAP_VC_CC_CFLAGS="$MACOS_BOOTSTRAP_CFLAGS"
+            if [[ "$(uname -m)" == "arm64" ]]; then
+              bootstrap_asset=v_macos_arm64.zip
+            else
+              bootstrap_asset=v_macos_x86_64.zip
+            fi
+            mkdir -p build/v-bootstrap
+            curl --fail --location --retry 3 \
+              -o build/v-bootstrap/v.zip \
+              "https://github.com/vlang/v/releases/latest/download/${bootstrap_asset}"
+            unzip -q build/v-bootstrap/v.zip -d build/v-bootstrap
+            chmod +x build/v-bootstrap/v
+            export VEXEROOT="$GITHUB_WORKSPACE"
+            VJOBS=1 V3_FASTC_NO_PARALLEL=1 \
+              build/v-bootstrap/v -new-compiler -no-parallel -prod -cc "$CC" \
+              -o v cmd/v
           else
             make -j2
           fi
