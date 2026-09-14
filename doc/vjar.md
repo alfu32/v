@@ -25,7 +25,8 @@ The generated JAR contains the program as a native library and can be started
 with `java -jar hello.jar`. It is intended for the operating system and CPU
 architecture on which it was built.
 
-The native artifacts are built by three manual GitHub workflows. Run the macOS
-and Windows workflows first for a commit, then run the Linux workflow after
-both succeed. The Linux workflow combines the matching six artifacts and
-publishes `vjar-universal`.
+The native artifacts are built and published independently by three manual
+GitHub workflows. The separate JAR workflow can be run manually, or is started
+automatically when one of the OS workflows completes. It combines every
+matching artifact that is available for the commit and publishes
+`vjar-universal`.

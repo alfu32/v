@@ -30,7 +30,7 @@ jobs:
           make -j2
           mkdir -p "build/native/${{ matrix.target }}"
           ./v -prod -shared -d jar \
-            -o "build/native/${{ matrix.target }}/v" cmd/v
+            -o "build/native/${{ matrix.target }}/v.dylib" cmd/v
           clang -dynamiclib \
             -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/darwin" \
             -o "build/native/${{ matrix.target }}/v_jni.dylib" \

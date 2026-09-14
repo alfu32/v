@@ -35,13 +35,13 @@ public final class Main {
             return;
         }
         Path root = extractVroot();
-        installTcc(root, target);
+        boolean hasTcc = installTcc(root, target);
         Path compiler = NativeMain.extract(nativePrefix + "v" + suffix, "v-compiler-");
         Path bridge = NativeMain.extract(nativePrefix + "v_jni" + suffix, "v-jni-");
         System.load(bridge.toString());
         configureVroot(root, target);
         List<String> args = new ArrayList<>(List.of(input));
-        if (!hasOption(args, "-cc")) {
+        if (hasTcc && !hasOption(args, "-cc")) {
             args.add(0, root.resolve("thirdparty/tcc/tcc.exe").toString());
             args.add(0, "-cc");
         }
@@ -59,7 +59,7 @@ public final class Main {
 
     private static void packageProgram(String[] input, String target, String suffix) throws Exception {
         Path root = extractVroot();
-        installTcc(root, target);
+        boolean hasTcc = installTcc(root, target);
         String[] compilerArgs = removePackageOptions(input);
         Path outputJar = outputJar(input);
         Path work = Files.createTempDirectory("v-package-");
@@ -70,7 +70,7 @@ public final class Main {
         args.add("jar");
         args.add("-gc");
         args.add("none");
-        if (!hasOption(List.of(compilerArgs), "-cc")) {
+        if (hasTcc && !hasOption(List.of(compilerArgs), "-cc")) {
             args.add("-cc");
             args.add(root.resolve("thirdparty/tcc/tcc.exe").toString());
         }
@@ -170,10 +170,10 @@ public final class Main {
         return root;
     }
 
-    private static void installTcc(Path root, String target) throws IOException {
+    private static boolean installTcc(Path root, String target) throws IOException {
         Path source = root.resolve("tcc").resolve(target).resolve("tinycc");
         Path destination = root.resolve("thirdparty/tcc/tinycc");
-        if (!Files.isDirectory(source)) throw new IOException("missing bundled TCC for " + target);
+        if (!Files.isDirectory(source)) return false;
         copyTree(source, destination);
         Path wrapper = root.resolve("thirdparty/tcc/tcc.exe");
         if (target.startsWith("windows-")) {
@@ -183,6 +183,7 @@ public final class Main {
                     StandardCharsets.UTF_8);
             wrapper.toFile().setExecutable(true);
         }
+        return true;
     }
 
     private static void copyTree(Path source, Path destination) throws IOException {

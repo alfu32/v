@@ -1,0 +1,128 @@
+name: V Java package (JAR assembly)
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - V Java package (Linux)
+      - V Java package (macOS)
+      - V Java package (Windows)
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  assemble:
+    name: Assemble available native payloads
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Select source commit
+        id: commit
+        shell: bash
+        run: echo "sha=${{ github.event.workflow_run.head_sha || github.sha }}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.commit.outputs.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Find completed OS workflow runs
+        id: runs
+        uses: actions/github-script@v7
+        env:
+          TARGET_SHA: ${{ steps.commit.outputs.sha }}
+        with:
+          script: |
+            const workflows = {
+              linux: 'vjar-linux.yml',
+              macos: 'vjar-macos.yml',
+              windows: 'vjar-windows.yml'
+            };
+            for (const [name, workflow_id] of Object.entries(workflows)) {
+              const runs = await github.paginate(
+                github.rest.actions.listWorkflowRuns,
+                { owner: context.repo.owner, repo: context.repo.repo, workflow_id,
+                  status: 'completed', per_page: 100 });
+              const matching = runs.filter(run => run.head_sha === process.env.TARGET_SHA);
+              if (matching.length) {
+                core.setOutput(`${name}_run_id`, String(matching[0].id));
+              } else {
+                core.warning(`No completed ${workflow_id} run for ${process.env.TARGET_SHA}`);
+              }
+            }
+      - name: Prepare native artifact directories
+        shell: bash
+        run: mkdir -p build/native/{linux-x86_64,linux-aarch64,macos-x86_64,macos-aarch64,windows-x86_64,windows-aarch64}
+      - name: Download Linux x86_64 payload
+        if: steps.runs.outputs.linux_run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.runs.outputs.linux_run_id }}
+          name: vjar-linux-x86_64
+          path: build/native/linux-x86_64
+      - name: Download Linux aarch64 payload
+        if: steps.runs.outputs.linux_run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.runs.outputs.linux_run_id }}
+          name: vjar-linux-aarch64
+          path: build/native/linux-aarch64
+      - name: Download macOS x86_64 payload
+        if: steps.runs.outputs.macos_run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.runs.outputs.macos_run_id }}
+          name: vjar-macos-x86_64
+          path: build/native/macos-x86_64
+      - name: Download macOS aarch64 payload
+        if: steps.runs.outputs.macos_run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.runs.outputs.macos_run_id }}
+          name: vjar-macos-aarch64
+          path: build/native/macos-aarch64
+      - name: Download Windows x86_64 payload
+        if: steps.runs.outputs.windows_run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.runs.outputs.windows_run_id }}
+          name: vjar-windows-x86_64
+          path: build/native/windows-x86_64
+      - name: Download Windows aarch64 payload
+        if: steps.runs.outputs.windows_run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.runs.outputs.windows_run_id }}
+          name: vjar-windows-aarch64
+          path: build/native/windows-aarch64
+      - name: Download TinyCC package
+        shell: bash
+        run: |
+          curl --fail --location --retry 3 \
+            -o tcc-cli.jar \
+            https://github.com/alfu32/tinycc/releases/latest/download/tinycc-cli.jar \
+            || echo 'warning: TinyCC package unavailable; assembling without it'
+      - name: Assemble available payloads
+        shell: bash
+        run: bash tools/vjar/assemble.sh build/native tcc-cli.jar v.jar
+      - name: Upload universal v.jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: vjar-universal
+          path: v.jar
+          if-no-files-found: error
