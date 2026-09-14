@@ -53,7 +53,11 @@ jobs:
           CC: ${{ matrix.cc }}
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
-            VJOBS=1 make -j2 VFLAGS="-new-compiler"
+            MACOS_BOOTSTRAP_CFLAGS="-include $GITHUB_WORKSPACE/tools/vjar/macos_bootstrap_semaphore.h"
+            VJOBS=1 V3_FASTC_NO_PARALLEL=1 make -j2 \
+              VFLAGS="-new-compiler -no-parallel" \
+              CFLAGS= \
+              BOOTSTRAP_VC_CC_CFLAGS="$MACOS_BOOTSTRAP_CFLAGS"
           else
             make -j2
           fi
