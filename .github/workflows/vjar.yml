@@ -52,12 +52,7 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
         run: |
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-            MACOS_BOOTSTRAP_FLAGS="-include $GITHUB_WORKSPACE/tools/vjar/macos_bootstrap_semaphore.h"
-            make -j2 CFLAGS= BOOTSTRAP_VC_CC_CFLAGS="$MACOS_BOOTSTRAP_FLAGS"
-          else
-            make -j2
-          fi
+          make -j2
           mkdir -p build/native/${{ matrix.target }}
           ./v -new-compiler -cc "$CC" -prod -shared -d jar \
             -o build/native/${{ matrix.target }}/v cmd/v
