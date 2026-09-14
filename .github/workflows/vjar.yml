@@ -53,7 +53,7 @@ jobs:
           CC: ${{ matrix.cc }}
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
-            make -j2 VFLAGS="-new-compiler"
+            VJOBS=1 make -j2 VFLAGS="-new-compiler"
           else
             make -j2
           fi
