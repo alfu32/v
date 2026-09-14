@@ -4,9 +4,6 @@ setlocal
 if "%~1"=="" goto usage
 
 set TARGET=%~1
-call makev.bat -tcc
-if errorlevel 1 exit /b 1
-
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 if not exist "%VSWHERE%" set "VSWHERE=%ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe"
 if not exist "%VSWHERE%" goto no_vs
@@ -16,6 +13,18 @@ if "%VSINSTALL%"=="" goto no_vs
 set "VSARCH=x64"
 if /i "%TARGET%"=="windows-aarch64" set "VSARCH=arm64"
 call "%VSINSTALL%\VC\Auxiliary\Build\vcvarsall.bat" %VSARCH%
+if errorlevel 1 exit /b 1
+
+if not exist vc\v_win.c git clone --filter=blob:none --quiet https://github.com/vlang/vc vc
+if errorlevel 1 exit /b 1
+
+clang -std=c99 -municode -g -w -o v_win_bootstrap.exe vc\v_win.c -ladvapi32 -lws2_32 -Wl,-stack=33554432
+if errorlevel 1 exit /b 1
+
+v_win_bootstrap.exe -no-parallel -gc none -cc clang -o v_stage.exe cmd/v
+if errorlevel 1 exit /b 1
+
+v_stage.exe -prod -cc clang -o v.exe cmd/v
 if errorlevel 1 exit /b 1
 
 if not exist build\native\%TARGET% mkdir build\native\%TARGET%
