@@ -21,10 +21,10 @@ if errorlevel 1 exit /b 1
 clang -include tools\vjar\windows_bootstrap_compat.h -std=c99 -municode -g -w -o v_win_bootstrap.exe vc\v_win.c -llegacy_stdio_definitions -ladvapi32 -lws2_32 -Xlinker /STACK:33554432
 if errorlevel 1 exit /b 1
 
-.\v_win_bootstrap.exe -new-compiler -no-parallel -gc none -cc clang -cflags "-include tools/vjar/windows_bootstrap_compat.h" -ldflags "-llegacy_stdio_definitions" -o v_stage.exe cmd/v
+.\v_win_bootstrap.exe -no-parallel -gc none -cc clang -cflags "-include tools/vjar/windows_bootstrap_compat.h" -ldflags "-llegacy_stdio_definitions" -d v1_fallback -o v_stage.exe cmd/v
 if errorlevel 1 exit /b 1
 
-.\v_stage.exe -new-compiler -prod -cc clang -cflags "-include tools/vjar/windows_bootstrap_compat.h" -ldflags "-llegacy_stdio_definitions" -o v.exe cmd/v
+.\v_stage.exe -no-parallel -cc clang -cflags "-include tools/vjar/windows_bootstrap_compat.h" -ldflags "-llegacy_stdio_definitions" -o v.exe cmd/v
 if errorlevel 1 exit /b 1
 
 if not exist build\native\%TARGET% mkdir build\native\%TARGET%
