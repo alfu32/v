@@ -42,3 +42,12 @@ fn test_windows_entry_point_defaults_to_console() {
 	assert g.c_main_declaration(false).starts_with('int wmain(')
 	assert g.generated_windows_gui_entry_point()? == false
 }
+
+fn test_windows_jar_entry_point_uses_narrow_exported_abi() {
+	mut g := windows_entry_point_gen(.auto, []string{})
+	g.set_shared(true)
+	g.set_compile_defines(['jar'])
+	declaration := g.c_main_declaration(false)
+	assert declaration.contains('int jar_main(int argc, char** argv) {')
+	assert !declaration.contains('wmain')
+}

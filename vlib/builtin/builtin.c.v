@@ -138,7 +138,9 @@ pub fn arguments() []string {
 	argv := &&u8(g_main_argv)
 	mut res := []string{cap: g_main_argc}
 	for i in 0 .. g_main_argc {
-		$if windows {
+		$if jar ? {
+			res << unsafe { tos_clone(argv[i]) }
+		} $else $if windows {
 			res << unsafe { string_from_wide(&u16(argv[i])) }
 		} $else {
 			res << unsafe { tos_clone(argv[i]) }

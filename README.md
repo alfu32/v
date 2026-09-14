@@ -47,6 +47,10 @@
 - C and JavaScript backends
 - Great for writing low-level software ([Vinix OS](https://github.com/vlang/vinix))
 
+The compiler can also be distributed as a universal Java launcher JAR. See
+[the Java launcher package guide](doc/vjar.md) for `java -jar v.jar` usage and
+`--package java`.
+
 ## Stability, future changes, post 1.0 freeze
 
 Despite being at an early development stage, the V language is relatively stable, and doesn't

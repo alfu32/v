@@ -1478,6 +1478,11 @@ pub fn (mut g FlatGen) set_shared(enabled bool) {
 	g.is_shared = enabled
 }
 
+// is_jar reports whether the shared library uses the Java launcher ABI.
+fn (g &FlatGen) is_jar() bool {
+	return g.is_shared && 'jar' in g.compile_defines
+}
+
 // set_object_file_mode gives generated runtime symbols translation-unit-local
 // linkage while retaining public entry-module functions through C ABI wrappers.
 pub fn (mut g FlatGen) set_object_file_mode(enabled bool) {

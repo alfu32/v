@@ -319,6 +319,17 @@ fn target_build_time() time.Time {
 
 // detect_vroot resolves detect vroot information for pref.
 fn detect_vroot() string {
+	// A compiler loaded from the Java package has no executable beside its
+	// support tree. The launcher extracts the tree and supplies its location
+	// before entering the native compiler. Check it before the build-time
+	// @VMODROOT value, which points to the checkout used to build the JAR.
+	packaged_root := os.getenv('V_PACKAGED_ROOT')
+	if packaged_root.len > 0 {
+		vroot := detect_vroot_from(packaged_root)
+		if vroot.len > 0 {
+			return vroot
+		}
+	}
 	baked_root := @VMODROOT
 	if baked_root.len > 0 {
 		return baked_root

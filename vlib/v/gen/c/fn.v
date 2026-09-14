@@ -545,6 +545,9 @@ fn windows_gui_stdio_setup(force_console bool) string {
 }
 
 fn (mut g FlatGen) c_main_declaration(force_main_console bool) string {
+	if g.is_jar() {
+		return g.exported_symbol_attribute() + 'int jar_main(int argc, char** argv) {'
+	}
 	if g.target.os != 'windows' {
 		return 'int main(int argc, char** argv) {'
 	}

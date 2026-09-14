@@ -1,0 +1,151 @@
+name: V Java package
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/vjar.yml'
+      - 'cmd/**'
+      - 'vlib/**'
+      - 'tools/vjar/**'
+  pull_request:
+    paths:
+      - '.github/workflows/vjar.yml'
+      - 'cmd/**'
+      - 'vlib/**'
+      - 'tools/vjar/**'
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x86_64
+            runner: ubuntu-22.04
+            cc: gcc
+            extension: .so
+          - target: linux-aarch64
+            runner: ubuntu-22.04-arm
+            cc: gcc
+            extension: .so
+          - target: macos-x86_64
+            runner: macos-15-intel
+            cc: clang
+            extension: .dylib
+          - target: macos-aarch64
+            runner: macos-15
+            cc: clang
+            extension: .dylib
+          - target: windows-x86_64
+            runner: windows-latest
+            extension: .dll
+          - target: windows-aarch64
+            runner: windows-11-arm
+            extension: .dll
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build V and the JNI bridge
+        if: runner.os != 'Windows'
+        env:
+          CC: ${{ matrix.cc }}
+        run: |
+          make -j2
+          mkdir -p build/native/${{ matrix.target }}
+          ./v -new-compiler -cc "$CC" -prod -shared -d jar \
+            -o build/native/${{ matrix.target }}/v cmd/v
+          linker_args=()
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            linker_args=(-ldl)
+          fi
+          "$CC" -shared -fPIC \
+            -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/$(uname -s | tr '[:upper:]' '[:lower:]')" \
+            -Itools/vjar/src \
+            -o build/native/${{ matrix.target }}/v_jni${{ matrix.extension }} \
+            tools/vjar/src/v_jni.c "${linker_args[@]}"
+
+      - name: Build V and the JNI bridge (Windows)
+        if: runner.os == 'Windows'
+        run: tools\vjar\build-windows.bat ${{ matrix.target }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vjar-${{ matrix.target }}
+          path: build/native
+          if-no-files-found: error
+
+  package:
+    name: Assemble universal v.jar
+    needs: native
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: vjar-*
+          path: build/native
+          merge-multiple: true
+
+      - name: Download the matching TCC runtime package
+        run: curl --fail --location --retry 3 \
+          -o build/tcc-cli.jar \
+          https://github.com/alfu32/tinycc/releases/latest/download/tinycc-cli.jar
+
+      - name: Compile the Java launcher
+        run: |
+          mkdir -p build/classes
+          javac -d build/classes \
+            tools/vjar/src/org/vlang/NativeMain.java \
+            tools/vjar/src/org/vlang/cli/Main.java
+
+      - name: Assemble v.jar
+        run: |
+          mkdir -p build/vroot
+          cp -R vlib build/vroot/vlib
+          mkdir -p build/vroot/thirdparty
+          for path in thirdparty/*; do
+            if [[ "$(basename "$path")" != "tcc" ]]; then
+              cp -R "$path" build/vroot/thirdparty/
+            fi
+          done
+          jar --create --file v.jar --main-class org.vlang.cli.Main \
+            -C build/classes . \
+            -C build vroot \
+            -C build native \
+            -C build tcc-cli.jar
+          jar --describe-module --file v.jar || true
+          test -s v.jar
+
+      - name: Smoke-test the compiler and generated launcher
+        run: |
+          java -jar v.jar --version
+          java -jar v.jar --package java -o build/hello.jar examples/hello_world.v
+          java -jar build/hello.jar
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: v.jar
+          path: v.jar
+          if-no-files-found: error
