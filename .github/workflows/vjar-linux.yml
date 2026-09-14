@@ -10,6 +10,7 @@ jobs:
   native:
     name: Linux ${{ matrix.target }}
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -30,17 +31,26 @@ jobs:
           git clone --filter=blob:none --quiet https://github.com/vlang/vc vc
           git -C vc checkout --quiet 089a309a1333507c7df4095129f01fe260041db6
           make latest_tcc
-      - name: Build V and the JNI bridge
+      - name: Build V native shared library
         shell: bash
         run: |
           make -j2 local=1
           mkdir -p "build/native/${{ matrix.target }}"
-          ./v -prod -shared -d jar \
+          echo "Starting native V payload build for ${{ matrix.target }}"
+          time ./v -prod -shared -d jar \
             -o "build/native/${{ matrix.target }}/v.so" cmd/v
+          test -s "build/native/${{ matrix.target }}/v.so"
+          ls -lh "build/native/${{ matrix.target }}/v.so"
+      - name: Build JNI bridge
+        shell: bash
+        run: |
+          echo "Starting JNI bridge build for ${{ matrix.target }}"
           cc -shared -fPIC \
             -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" \
             -o "build/native/${{ matrix.target }}/v_jni.so" \
             tools/vjar/src/main/native/v_jni.c -ldl
+          test -s "build/native/${{ matrix.target }}/v_jni.so"
+          ls -lh "build/native/${{ matrix.target }}/v_jni.so"
       - name: Upload native payload
         uses: actions/upload-artifact@v4
         with:

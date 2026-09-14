@@ -41,6 +41,7 @@ jobs:
               macos: 'vjar-macos.yml',
               windows: 'vjar-windows.yml'
             };
+            let completed = 0;
             for (const [name, workflow_id] of Object.entries(workflows)) {
               const runs = await github.paginate(
                 github.rest.actions.listWorkflowRuns,
@@ -49,15 +50,23 @@ jobs:
               const matching = runs.filter(run => run.head_sha === process.env.TARGET_SHA);
               if (matching.length) {
                 core.setOutput(`${name}_run_id`, String(matching[0].id));
+                completed += 1;
               } else {
                 core.warning(`No completed ${workflow_id} run for ${process.env.TARGET_SHA}`);
               }
             }
+            const manual = process.env.GITHUB_EVENT_NAME === 'workflow_dispatch';
+            core.setOutput('ready', manual || completed === 3 ? 'true' : 'false');
+            core.setOutput('completed', String(completed));
+      - name: Wait for all OS workflows
+        if: steps.runs.outputs.ready != 'true'
+        run: echo "::notice::Waiting for all three OS workflows; completed ${{ steps.runs.outputs.completed }}/3."
       - name: Prepare native artifact directories
+        if: steps.runs.outputs.ready == 'true'
         shell: bash
         run: mkdir -p build/native/{linux-x86_64,linux-aarch64,macos-x86_64,macos-aarch64,windows-x86_64,windows-aarch64}
       - name: Download Linux x86_64 payload
-        if: steps.runs.outputs.linux_run_id != ''
+        if: steps.runs.outputs.ready == 'true' && steps.runs.outputs.linux_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
@@ -66,7 +75,7 @@ jobs:
           name: vjar-linux-x86_64
           path: build/native/linux-x86_64
       - name: Download Linux aarch64 payload
-        if: steps.runs.outputs.linux_run_id != ''
+        if: steps.runs.outputs.ready == 'true' && steps.runs.outputs.linux_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
@@ -75,7 +84,7 @@ jobs:
           name: vjar-linux-aarch64
           path: build/native/linux-aarch64
       - name: Download macOS x86_64 payload
-        if: steps.runs.outputs.macos_run_id != ''
+        if: steps.runs.outputs.ready == 'true' && steps.runs.outputs.macos_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
@@ -84,7 +93,7 @@ jobs:
           name: vjar-macos-x86_64
           path: build/native/macos-x86_64
       - name: Download macOS aarch64 payload
-        if: steps.runs.outputs.macos_run_id != ''
+        if: steps.runs.outputs.ready == 'true' && steps.runs.outputs.macos_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
@@ -93,7 +102,7 @@ jobs:
           name: vjar-macos-aarch64
           path: build/native/macos-aarch64
       - name: Download Windows x86_64 payload
-        if: steps.runs.outputs.windows_run_id != ''
+        if: steps.runs.outputs.ready == 'true' && steps.runs.outputs.windows_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
@@ -102,7 +111,7 @@ jobs:
           name: vjar-windows-x86_64
           path: build/native/windows-x86_64
       - name: Download Windows aarch64 payload
-        if: steps.runs.outputs.windows_run_id != ''
+        if: steps.runs.outputs.ready == 'true' && steps.runs.outputs.windows_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
@@ -111,16 +120,30 @@ jobs:
           name: vjar-windows-aarch64
           path: build/native/windows-aarch64
       - name: Download TinyCC package
+        if: steps.runs.outputs.ready == 'true'
         shell: bash
         run: |
           curl --fail --location --retry 3 \
             -o tcc-cli.jar \
             https://github.com/alfu32/tinycc/releases/latest/download/tinycc-cli.jar \
             || echo 'warning: TinyCC package unavailable; assembling without it'
+      - name: Report downloaded native payloads
+        if: steps.runs.outputs.ready == 'true'
+        shell: bash
+        run: |
+          echo 'Native files available for assembly:'
+          find build/native -type f -print | sort || true
+          native_count=$(find build/native -type f \( -name 'v.so' -o -name 'v.dylib' -o -name 'v.dll' \) | wc -l)
+          if [ "$native_count" -eq 0 ]; then
+            echo '::error::No native V payloads were downloaded. The OS workflows may not have uploaded artifacts yet.'
+            exit 2
+          fi
       - name: Assemble available payloads
+        if: steps.runs.outputs.ready == 'true'
         shell: bash
         run: bash tools/vjar/assemble.sh build/native tcc-cli.jar v.jar
       - name: Upload universal v.jar
+        if: steps.runs.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: vjar-universal

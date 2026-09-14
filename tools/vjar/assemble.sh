@@ -16,6 +16,7 @@ trap 'rm -rf "$work"' EXIT
 classes="$work/classes"
 resources="$work/resources"
 mkdir -p "$classes" "$resources/native" "$resources/vroot/tcc"
+native_count=0
 
 for target in "${targets[@]}"; do
 	case "$target" in
@@ -29,6 +30,8 @@ for target in "${targets[@]}"; do
 		mkdir -p "$resources/native/$target"
 		cp "$native_v" "$resources/native/$target/v$suffix"
 		cp "$source/v_jni$suffix" "$resources/native/$target/v_jni$suffix"
+		native_count=$((native_count + 1))
+		echo "including native payload: $target"
 	else
 		echo "warning: incomplete native payload for $target; skipping it" >&2
 	fi
@@ -45,7 +48,12 @@ for target in "${targets[@]}"; do
 			echo "warning: TCC JAR has no payload for $target" >&2
 		fi
 	fi
-done
+	done
+
+if test "$native_count" -eq 0; then
+	echo 'error: no complete native V payloads were found; no JAR was assembled' >&2
+	exit 2
+fi
 
 cp -R vlib "$resources/vroot/"
 for directory in cmd thirdparty; do
