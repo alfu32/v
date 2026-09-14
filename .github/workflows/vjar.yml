@@ -52,7 +52,11 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
         run: |
-          make -j2
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            make -j2 VFLAGS="-new-compiler"
+          else
+            make -j2
+          fi
           mkdir -p build/native/${{ matrix.target }}
           ./v -new-compiler -cc "$CC" -prod -shared -d jar \
             -o build/native/${{ matrix.target }}/v cmd/v
