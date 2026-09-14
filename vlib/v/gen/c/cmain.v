@@ -14,8 +14,12 @@ pub fn (mut g Gen) gen_c_main() {
 	if g.pref.is_liveshared {
 		return
 	}
-	if g.pref.is_o {
+	is_jar := 'jar' in g.pref.compile_defines
+	if g.pref.is_o && !is_jar {
 		// no main in .o files
+		return
+	}
+	if g.pref.is_shared && !is_jar {
 		return
 	}
 	if 'no_main' in g.pref.compile_defines {
@@ -114,6 +118,11 @@ pub fn fix_reset_dbg_line(src strings.Builder, out_file string) strings.Builder 
 }
 
 fn (mut g Gen) gen_c_main_function_only_header() {
+	if 'jar' in g.pref.compile_defines {
+		g.export_funcs << 'jar_main'
+		g.writeln('VV_EXP int jar_main(int ___argc, char** ___argv){')
+		return
+	}
 	if g.pref.cmain != '' {
 		g.writeln('int ${g.pref.cmain}(int ___argc, char** ___argv){')
 		return

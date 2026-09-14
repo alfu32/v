@@ -1,0 +1,43 @@
+name: V Java package (Windows)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    name: Windows ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: windows-x86_64
+            runner: windows-2022
+          - target: windows-aarch64
+            runner: windows-11-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Build V and the JNI bridge
+        shell: cmd
+        run: |
+          call makev.bat -msvc
+          if errorlevel 1 exit /b %errorlevel%
+          if not exist build\native\${{ matrix.target }} mkdir build\native\${{ matrix.target }}
+          .\v.exe -prod -shared -d jar -cc msvc -o build\native\${{ matrix.target }}\v.dll cmd\v
+          if errorlevel 1 exit /b %errorlevel%
+          cl /nologo /LD /I"%JAVA_HOME%\include" /I"%JAVA_HOME%\include\win32" ^
+            tools\vjar\src\main\native\v_jni.c ^
+            /Fe:build\native\${{ matrix.target }}\v_jni.dll
+      - name: Upload native payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: vjar-${{ matrix.target }}
+          path: build/native/${{ matrix.target }}
+          if-no-files-found: error
