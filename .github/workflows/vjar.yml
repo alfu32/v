@@ -54,7 +54,7 @@ jobs:
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
             MACOS_BOOTSTRAP_FLAGS="-include $GITHUB_WORKSPACE/tools/vjar/macos_bootstrap_semaphore.h"
-            make -j2 CFLAGS="$MACOS_BOOTSTRAP_FLAGS"
+            make -j2 CFLAGS= BOOTSTRAP_VC_CC_CFLAGS="$MACOS_BOOTSTRAP_FLAGS"
           else
             make -j2
           fi

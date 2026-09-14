@@ -4,7 +4,7 @@ setlocal
 if "%~1"=="" goto usage
 
 set TARGET=%~1
-call makev.bat -msvc
+call makev.bat -tcc
 if errorlevel 1 exit /b 1
 
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
