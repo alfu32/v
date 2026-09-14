@@ -68,7 +68,7 @@ jobs:
             export VEXEROOT="$GITHUB_WORKSPACE"
             VJOBS=1 V3_FASTC_NO_PARALLEL=1 \
               "$bootstrap_exe" -prod -cc "$CC" \
-              -o v cmd/v
+              -path "$GITHUB_WORKSPACE/vlib" -o v cmd/v
           else
             make -j2
           fi
