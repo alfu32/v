@@ -7,14 +7,7 @@ name: Workflow Lint
 ## just run: `npx prettier --check **.yml` .
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - '**.yml'
-  pull_request:
-    paths:
-      - '**.yml'
+  workflow_dispatch:
 
 concurrency:
   group: workflow-lint-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

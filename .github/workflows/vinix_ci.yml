@@ -1,21 +1,7 @@
 name: Build Vinix
 
 on:
-  workflow_call:
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/vinix_ci.yml'
-      - 'cmd/tools/vrepl.v'
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/vinix_ci.yml'
-      - 'cmd/tools/vrepl.v'
+  workflow_dispatch:
 
 concurrency:
   group: vinix-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

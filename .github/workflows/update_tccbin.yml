@@ -52,8 +52,6 @@ on:
         description: 'Opaque persisted source-recovery handoff identifier (dark mode)'
         required: false
         default: ''
-  schedule:
-    - cron: '17 3 1 * *'
 
 permissions:
   contents: read

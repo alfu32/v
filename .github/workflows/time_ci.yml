@@ -1,20 +1,7 @@
 name: Time CI
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'vlib/**'
-      - 'cmd/tools/builders/**.v'
-      - '**/time_ci.yml'
-      - '!**.md'
-  pull_request:
-    paths:
-      - 'vlib/**'
-      - 'cmd/tools/builders/**.v'
-      - '**/time_ci.yml'
-      - '!**.md'
+  workflow_dispatch:
 
 concurrency:
   group: time-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

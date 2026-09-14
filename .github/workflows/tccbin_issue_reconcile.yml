@@ -2,8 +2,6 @@ name: TCC issue projection reconciliation
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '7 4 * * *'
 
 permissions:
   contents: read

@@ -7,10 +7,6 @@ name: hub_docker_ci
 ## Allow for manual override too:
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - '[0-9].[0-9]+.[0-9]+'
-      - 'weekly.*'
 
 concurrency:
   group: 'hub_docker_ci-${{ github.ref }}'

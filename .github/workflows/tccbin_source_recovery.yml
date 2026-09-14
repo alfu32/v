@@ -9,11 +9,6 @@ on:
         description: 'Opaque persisted recovery handoff identifier'
         required: true
         type: string
-  schedule:
-    - cron: '47 3 * * *'
-  workflow_run:
-    workflows: ['Update tccbin', 'TCC bundle revalidation']
-    types: [completed]
 
 permissions:
   contents: read

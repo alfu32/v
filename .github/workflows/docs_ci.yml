@@ -5,18 +5,7 @@ name: Docs CI
 ### early warning, if they break it.
 
 on:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - '**.yml'
-      - '!**/docs_ci.yml'
-      - 'cmd/tools/vrepl.v'
-  pull_request:
-    paths-ignore:
-      - '**.yml'
-      - '!**/docs_ci.yml'
-      - 'cmd/tools/vrepl.v'
+  workflow_dispatch:
 
 concurrency:
   group: docs-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

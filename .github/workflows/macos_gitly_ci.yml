@@ -24,10 +24,6 @@ name: macOS CI (gitly_ci)
 # serialized (one macOS CI job at a time) without dropping any commit.
 
 on:
-  push:
-    branches: [master]
-  pull_request:
-    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 jobs:

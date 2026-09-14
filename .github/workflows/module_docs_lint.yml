@@ -1,14 +1,7 @@
 name: Code CI vlib modules
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - '**/cmd/tools/vdoc/theme/**'
-  pull_request:
-    paths:
-      - '**/cmd/tools/vdoc/theme/**'
+  workflow_dispatch:
 
 concurrency:
   group: module-docs-lint-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

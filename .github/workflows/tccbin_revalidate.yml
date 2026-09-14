@@ -9,8 +9,6 @@ on:
         description: 'Opaque persisted recovery handoff identifier'
         required: true
         type: string
-  schedule:
-    - cron: '27 4 * * *'
 
 permissions:
   contents: read

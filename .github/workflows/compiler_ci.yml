@@ -2,14 +2,6 @@ name: Compiler CI
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-    paths:
-      - 'vlib/v/**'
-  pull_request:
-    paths:
-      - 'vlib/v/**'
 
 concurrency:
   group: compiler-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

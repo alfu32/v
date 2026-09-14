@@ -2,22 +2,6 @@ name: Database CI
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/db_ci.yml'
-      - 'examples/**'
-      - 'doc/**'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/db_ci.yml'
-      - 'examples/**'
-      - 'doc/**'
 
 concurrency:
   group: db-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

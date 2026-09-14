@@ -1,9 +1,7 @@
 name: Diagnose PR 28232 merge conflict
 
 on:
-  push:
-    branches:
-      - fix-master-ci-batch-2-current
+  workflow_dispatch:
 
 permissions:
   contents: read

@@ -1,9 +1,7 @@
 name: Add voting info to new issue
 
 on:
-  issues:
-    types:
-      - opened
+  workflow_dispatch:
 
 jobs:
   add-voting-info:

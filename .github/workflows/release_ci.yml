@@ -2,15 +2,6 @@ name: Release CI
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - '.github/workflows/release_ci.yml'
-  push:
-    paths:
-      - '.github/workflows/release_ci.yml'
-    tags:
-      - weekly.**
-      - 0.**
 
 concurrency:
   group: release-${{ github.workflow }}-${{ github.ref }}

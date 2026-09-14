@@ -2,28 +2,6 @@ name: Bootstrapping CI
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - '**.yml'
-      - '**.md'
-      - '**.vv'
-      - '**.out'
-      - 'cmd/tools/**'
-      - '!cmd/tools/builders/**.v'
-      - '!cmd/tools/vup.v'
-      - '!**/bootstrapping_ci.yml'
-  pull_request:
-    paths-ignore:
-      - '**.yml'
-      - '**.md'
-      - '**.vv'
-      - '**.out'
-      - 'cmd/tools/**'
-      - '!cmd/tools/builders/**.v'
-      - '!cmd/tools/vup.v'
-      - '!**/bootstrapping_ci.yml'
 
 concurrency:
   group: bootstrapping-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

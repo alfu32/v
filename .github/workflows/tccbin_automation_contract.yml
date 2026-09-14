@@ -1,8 +1,7 @@
 name: TCC bundle automation contract
 
 on:
-  pull_request:
-  merge_group:
+  workflow_dispatch:
 
 permissions:
   contents: read

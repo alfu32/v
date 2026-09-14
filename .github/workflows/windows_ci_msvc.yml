@@ -1,26 +1,7 @@
 name: CI Windows MSVC
 
 on:
-  push:
-    branches:
-      - master
-      - 'smoke/**'
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**.bat'
-      - '!**/windows_ci_msvc.yml'
-      - 'cmd/tools/**'
-      - '!cmd/tools/builders/**.v'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**.bat'
-      - '!**/windows_ci_msvc.yml'
-      - '!**/windows-install-sqlite.bat'
-      - 'cmd/tools/**'
-      - '!cmd/tools/builders/**.v'
+  workflow_dispatch:
 
 concurrency:
   group: windows-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

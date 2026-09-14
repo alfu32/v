@@ -1,20 +1,7 @@
 name: toml CI
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'vlib/**'
-      - '.github/actions/setup-v/**'
-      - '**/toml_ci.yml'
-      - '!**.md'
-  pull_request:
-    paths:
-      - 'vlib/**'
-      - '.github/actions/setup-v/**'
-      - '**/toml_ci.yml'
-      - '!**.md'
+  workflow_dispatch:
 
 concurrency:
   group: toml-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

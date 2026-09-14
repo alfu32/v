@@ -2,22 +2,6 @@ name: Path Testing CI
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/paths_ci.yml'
-      - 'cmd/tools/**'
-      - '!cmd/tools/builders/**.v'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/paths_ci.yml'
-      - 'cmd/tools/**'
-      - '!cmd/tools/builders/**.v'
 
 concurrency:
   group: paths-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

@@ -1,24 +1,7 @@
 name: Tools CI
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'cmd/**'
-      - '!cmd/tools/vpm/**'
-      - 'vlib/**'
-      - 'thirdparty/**'
-      - '!**.md'
-      - '**/tools_ci.yml'
-  pull_request:
-    paths:
-      - 'cmd/**'
-      - '!cmd/tools/vpm/**'
-      - 'vlib/**'
-      - 'thirdparty/**'
-      - '!**.md'
-      - '**/tools_ci.yml'
+  workflow_dispatch:
 
 concurrency:
   group: tools-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

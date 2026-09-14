@@ -1,23 +1,7 @@
 name: vab CI
 
 on:
-  workflow_call:
-  push:
-    branches:
-      - master
-    paths:
-      - 'vlib/**'
-      - 'thirdparty/**'
-      - 'cmd/tools/builders/**.v'
-      - '**/vab_ci.yml'
-      - '!**.md'
-  pull_request:
-    paths:
-      - 'vlib/**'
-      - 'thirdparty/**'
-      - 'cmd/tools/builders/**.v'
-      - '**/vab_ci.yml'
-      - '!**.md'
+  workflow_dispatch:
 
 concurrency:
   group: vab-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}

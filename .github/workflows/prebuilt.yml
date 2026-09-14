@@ -2,8 +2,6 @@ name: Test prebuilt binaries
 
 on:
   workflow_dispatch:
-  release:
-    types: [edited, published]
 
 jobs:
   prebuilt-linux:

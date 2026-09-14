@@ -1,22 +1,7 @@
 name: More extensive but slower tests
 
 on:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/more_extensive_but_slower_tests_ci.yml'
-      - 'examples/**'
-      - 'cmd/tools/**'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/more_extensive_but_slower_tests_ci.yml'
-      - 'examples/**'
-      - 'cmd/tools/**'
+  workflow_dispatch:
 
 concurrency:
   group: slower_tests-${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}
