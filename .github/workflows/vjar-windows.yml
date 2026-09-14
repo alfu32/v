@@ -1,0 +1,41 @@
+name: V Java package - Windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-native:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: windows-x86_64
+            runner: windows-latest
+            extension: .dll
+          - target: windows-aarch64
+            runner: windows-11-arm
+            extension: .dll
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build V and the JNI bridge
+        run: tools\vjar\build-windows.bat ${{ matrix.target }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vjar-${{ matrix.target }}
+          path: build/native
+          if-no-files-found: error

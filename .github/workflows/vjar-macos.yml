@@ -1,0 +1,70 @@
+name: V Java package - macOS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-native:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: macos-x86_64
+            runner: macos-15-intel
+            cc: clang
+            extension: .dylib
+          - target: macos-aarch64
+            runner: macos-15
+            cc: clang
+            extension: .dylib
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build V and the JNI bridge
+        env:
+          CC: ${{ matrix.cc }}
+        run: |
+          if [[ "$(uname -m)" == "arm64" ]]; then
+            bootstrap_asset=v_macos_arm64.zip
+          else
+            bootstrap_asset=v_macos_x86_64.zip
+          fi
+          mkdir -p build/v-bootstrap
+          curl --fail --location --retry 3 \
+            -o build/v-bootstrap/v.zip \
+            "https://github.com/vlang/v/releases/latest/download/${bootstrap_asset}"
+          unzip -q build/v-bootstrap/v.zip -d build/v-bootstrap
+          bootstrap_exe=build/v-bootstrap/v/v
+          chmod +x "$bootstrap_exe"
+          export VEXE="$GITHUB_WORKSPACE/v"
+          export VEXEROOT="$GITHUB_WORKSPACE"
+          VJOBS=1 V3_FASTC_NO_PARALLEL=1 \
+            "$bootstrap_exe" -cc "$CC" \
+            -path "$GITHUB_WORKSPACE/vlib" -o v cmd/v
+          mkdir -p build/native/${{ matrix.target }}
+          ./v -new-compiler -cc "$CC" -prod -shared -d jar \
+            -o build/native/${{ matrix.target }}/v cmd/v
+          "$CC" -shared -fPIC \
+            -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/darwin" \
+            -Itools/vjar/src \
+            -o build/native/${{ matrix.target }}/v_jni${{ matrix.extension }} \
+            tools/vjar/src/v_jni.c
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vjar-${{ matrix.target }}
+          path: build/native
+          if-no-files-found: error
