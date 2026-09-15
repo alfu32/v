@@ -13,6 +13,9 @@ java -jar v.jar hello.v
 
 The launcher bundles TinyCC for compiling programs without a separately
 installed C compiler. An explicit `-cc` option is still passed through to V.
+Native builds also carry V's `libgc.a` when available. If an older or partial
+JAR has no `libgc.a`, the launcher defaults to `-gc none`; pass an explicit
+`-gc` option when a different garbage collector is required.
 
 To create a platform-specific executable JAR from a V program, use:
 

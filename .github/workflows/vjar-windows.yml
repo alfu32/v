@@ -48,6 +48,7 @@ jobs:
           cl /nologo /LD /I"%JAVA_HOME%\include" /I"%JAVA_HOME%\include\win32" ^
             tools\vjar\src\main\native\v_jni.c ^
             /Fe:build\native\${{ matrix.target }}\v_jni.dll
+          if exist thirdparty\tcc\lib\libgc.a copy /Y thirdparty\tcc\lib\libgc.a build\native\${{ matrix.target }}\libgc.a
       - name: Upload native payload
         uses: actions/upload-artifact@v4
         with:

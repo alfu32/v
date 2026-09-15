@@ -53,6 +53,9 @@ jobs:
             tools/vjar/src/main/native/v_jni.c -ldl
           test -s "build/native/${{ matrix.target }}/v_jni.so"
           ls -lh "build/native/${{ matrix.target }}/v_jni.so"
+          if test -f thirdparty/tcc/lib/libgc.a; then
+            cp thirdparty/tcc/lib/libgc.a "build/native/${{ matrix.target }}/libgc.a"
+          fi
       - name: Upload native payload
         uses: actions/upload-artifact@v4
         with:

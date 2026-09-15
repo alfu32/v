@@ -36,6 +36,11 @@ for target in "${targets[@]}"; do
 		echo "warning: incomplete native payload for $target; skipping it" >&2
 	fi
 
+	libgc=''
+	if test -f "$source/libgc.a"; then
+		libgc="$source/libgc.a"
+	fi
+
 	if test -n "$tcc_jar"; then
 		mkdir -p "$work/tcc/$target"
 		(
@@ -47,6 +52,16 @@ for target in "${targets[@]}"; do
 		else
 			echo "warning: TCC JAR has no payload for $target" >&2
 		fi
+	fi
+	if test -z "$libgc" && test -d "$work/tcc/$target"; then
+		libgc=$(find "$work/tcc/$target" -type f -name libgc.a -print -quit)
+	fi
+	if test -n "$libgc" && test -f "$libgc"; then
+		mkdir -p "$resources/vroot/tcc/$target"
+		cp "$libgc" "$resources/vroot/tcc/$target/libgc.a"
+		echo "including libgc.a: $target"
+	else
+		echo "warning: no libgc.a payload for $target" >&2
 	fi
 	done
 

@@ -41,6 +41,14 @@ public final class Main {
         System.load(bridge.toString());
         configureVroot(root, target);
         List<String> args = new ArrayList<>(List.of(input));
+        if (!hasBundledLibgc(root) && isCompilationRequest(args) && !hasOption(args, "-gc")) {
+            args.add(0, "none");
+            args.add(0, "-gc");
+        }
+        if (isPackagedReentry() && !hasOption(args, "-gc")) {
+            args.add(0, "none");
+            args.add(0, "-gc");
+        }
         if (hasTcc && !hasOption(args, "-cc")) {
             args.add(0, root.resolve("thirdparty/tcc/tcc.exe").toString());
             args.add(0, "-cc");
@@ -119,10 +127,53 @@ public final class Main {
         return args.stream().anyMatch(arg -> arg.equals(option) || arg.startsWith(option + "="));
     }
 
-    private static void configureVroot(Path root, String target) {
-        String executable = root.resolve("v" + (target.startsWith("windows-") ? ".exe" : "")).toString();
+    private static void configureVroot(Path root, String target) throws IOException {
+        Path executable = createCompilerLauncher(root, target);
         NativeMain.setEnv("V_PACKAGED_ROOT", root.toString());
-        NativeMain.setEnv("VEXE", executable);
+        NativeMain.setEnv("VEXE", executable.toString());
+    }
+
+    private static Path createCompilerLauncher(Path root, String target) throws IOException {
+        Path jar = ownJar();
+        boolean windows = target.startsWith("windows-");
+        Path java = Path.of(System.getProperty("java.home"), "bin",
+                windows ? "java.exe" : "java");
+        Path launcher = root.resolve(windows ? "v.cmd" : "v");
+        String contents;
+        if (windows) {
+            contents = "@echo off\r\n"
+                    + "set \"V_PACKAGED_REENTRY=1\"\r\n"
+                    + "\"" + java + "\" -jar \"" + jar + "\" %*\r\n"
+                    + "exit /b %errorlevel%\r\n";
+        } else {
+            contents = "#!/bin/sh\nexport V_PACKAGED_REENTRY=1\nexec "
+                    + shellQuote(java.toString()) + " -jar "
+                    + shellQuote(jar.toString()) + " \"$@\"\n";
+        }
+        Files.writeString(launcher, contents, StandardCharsets.UTF_8);
+        if (!windows) launcher.toFile().setExecutable(true);
+        return launcher;
+    }
+
+    private static String shellQuote(String value) {
+        return "'" + value.replace("'", "'\\''") + "'";
+    }
+
+    private static boolean isPackagedReentry() {
+        return "1".equals(System.getenv("V_PACKAGED_REENTRY"));
+    }
+
+    private static boolean hasBundledLibgc(Path root) {
+        return Files.isRegularFile(root.resolve("thirdparty/tcc/lib/libgc.a"));
+    }
+
+    private static boolean isCompilationRequest(List<String> args) {
+        for (String arg : args) {
+            if (arg.equals("run") || arg.equals("crun") || arg.equals("build")
+                    || arg.equals("build-module")) return true;
+            if (arg.endsWith(".v") || arg.endsWith(".vsh")) return true;
+        }
+        return false;
     }
 
     private static Path outputJar(String[] input) {
@@ -145,13 +196,7 @@ public final class Main {
     private static Path extractVroot() throws IOException {
         Path root = Files.createTempDirectory("v-vroot-");
         root.toFile().deleteOnExit();
-        Path codeSource;
-        try {
-            codeSource = Path.of(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-        } catch (Exception exception) {
-            throw new IOException("could not locate the V JAR", exception);
-        }
-        try (JarFile jar = new JarFile(codeSource.toFile())) {
+        try (JarFile jar = new JarFile(ownJar().toFile())) {
             Enumeration<JarEntry> entries = jar.entries();
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
@@ -175,6 +220,12 @@ public final class Main {
         Path destination = root.resolve("thirdparty/tcc/tinycc");
         if (!Files.isDirectory(source)) return false;
         copyTree(source, destination);
+        Path bundledLibgc = root.resolve("tcc").resolve(target).resolve("libgc.a");
+        if (Files.isRegularFile(bundledLibgc)) {
+            Path libgc = root.resolve("thirdparty/tcc/lib/libgc.a");
+            Files.createDirectories(libgc.getParent());
+            Files.copy(bundledLibgc, libgc, StandardCopyOption.REPLACE_EXISTING);
+        }
         Path wrapper = root.resolve("thirdparty/tcc/tcc.exe");
         if (target.startsWith("windows-")) {
             Files.copy(destination.resolve("bin/tcc.exe"), wrapper, StandardCopyOption.REPLACE_EXISTING);
@@ -204,13 +255,7 @@ public final class Main {
         manifest.getMainAttributes().putValue("Manifest-Version", "1.0");
         manifest.getMainAttributes().putValue("Main-Class", "org.vlang.cli.Main");
         try (OutputStream out = Files.newOutputStream(output); JarOutputStream jar = new JarOutputStream(out, manifest)) {
-            Path ownJar;
-            try {
-                ownJar = Path.of(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            } catch (Exception exception) {
-                throw new IOException("could not locate the V JAR", exception);
-            }
-            try (JarFile source = new JarFile(ownJar.toFile())) {
+            try (JarFile source = new JarFile(ownJar().toFile())) {
                 source.stream().filter(entry -> entry.getName().startsWith("org/vlang/")
                         && entry.getName().endsWith(".class")).forEach(entry -> copyEntry(source, entry, jar));
             }
@@ -219,6 +264,14 @@ public final class Main {
             jar.putNextEntry(programEntry);
             Files.copy(program, jar);
             jar.closeEntry();
+        }
+    }
+
+    private static Path ownJar() throws IOException {
+        try {
+            return Path.of(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        } catch (Exception exception) {
+            throw new IOException("could not locate the V JAR", exception);
         }
     }
 
