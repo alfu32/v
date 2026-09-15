@@ -1406,7 +1406,7 @@ pub fn (mut g Gen) finish() {
 	if g.pref.is_test {
 		g.gen_c_main_for_tests()
 	} else if (g.pref.is_shared || g.pref.is_liveshared) && g.pref.os == .windows
-		&& !g.has_user_defined_windows_dll_main() {
+		&& 'jar' !in g.pref.compile_defines && !g.has_user_defined_windows_dll_main() {
 		// create DllMain() for windows .dll
 		g.gen_dll_main()
 	} else {

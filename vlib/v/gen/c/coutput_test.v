@@ -807,6 +807,7 @@ fn test_jar_shared_library_defers_runtime_initialization_to_jar_main() {
 	assert compilation.output.contains('int jar_main(int ___argc, char** ___argv){')
 	assert !compilation.output.contains('__attribute__ ((constructor))')
 	assert !compilation.output.contains('void _vinit_caller() {')
+	assert !compilation.output.contains('DllMain(')
 }
 
 fn test_boehm_gc_header_precedes_imported_module_spawn_wrappers() {
