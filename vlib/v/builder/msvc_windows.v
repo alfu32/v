@@ -352,11 +352,16 @@ pub fn (mut v Builder) cc_msvc() {
 		// generate a .def for export function names, avoid function name mangle
 		// must put after the /link flag!
 		def_name := os.real_path(app_dir_out_name + '.def')
-		a << '/DEF:' + os.quoted_path(def_name)
-		if !v.ccoptions.debug_mode {
-			v.pref.cleanup_files << def_name
-			v.pref.cleanup_files << app_dir_out_name_c + '.exp'
-			v.pref.cleanup_files << app_dir_out_name_c + '.lib'
+		// V's exported declarations already use __declspec(dllexport) on MSVC.
+		// The .def is therefore optional; do not make a missing sidecar prevent
+		// linking, especially for generated JAR payloads.
+		if os.is_file(def_name) {
+			a << '/DEF:' + os.quoted_path(def_name)
+			if !v.ccoptions.debug_mode {
+				v.pref.cleanup_files << def_name
+				v.pref.cleanup_files << app_dir_out_name_c + '.exp'
+				v.pref.cleanup_files << app_dir_out_name_c + '.lib'
+			}
 		}
 	}
 
