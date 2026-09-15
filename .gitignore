@@ -1,3 +1,6 @@
+vjar-universal.zip
+vjar-universal/**
+
 # ignore sub-level extensionless build outputs
 */**/*
 !*/

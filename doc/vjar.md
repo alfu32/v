@@ -30,3 +30,12 @@ GitHub workflows. The separate JAR workflow can be run manually, or is started
 automatically when one of the OS workflows completes. It combines every
 matching artifact that is available for the commit and publishes
 `vjar-universal`.
+
+To assemble a JAR after a workflow-only commit without rebuilding the other
+platforms, run the JAR workflow manually and provide the existing Linux,
+macOS, and Windows workflow run IDs. Optionally provide `source_ref` for the
+commit or branch containing the V sources. Explicit run IDs override the
+normal same-commit artifact lookup. The macOS x86_64 and aarch64 run ID
+overrides can refer to different runs when only one architecture was rebuilt.
+The macOS workflow also accepts a target selection, so choose
+`macos-x86_64` when retrying only the Intel build.

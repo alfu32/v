@@ -791,6 +791,24 @@ fn test_user_defined_windows_dllmain_disables_generated_entrypoint() {
 	assert !compilation.output.contains('case DLL_PROCESS_ATTACH')
 }
 
+fn test_jar_shared_library_defers_runtime_initialization_to_jar_main() {
+	os.chdir(vroot) or {}
+	test_source := os.join_path(os.vtmp_dir(), 'coutput_jar_shared_init.vv')
+	os.write_file(test_source, 'fn main() {}\n')!
+	defer {
+		os.rm(test_source) or {}
+	}
+	cmd := '${os.quoted_path(vexe)} -d jar -shared -o - ${os.quoted_path(test_source)}'
+	compilation := os.execute(cmd)
+	ensure_compilation_succeeded(compilation, cmd)
+	if generated_c_uses_v3_codegen(compilation.output) {
+		return
+	}
+	assert compilation.output.contains('int jar_main(int ___argc, char** ___argv){')
+	assert !compilation.output.contains('__attribute__ ((constructor))')
+	assert !compilation.output.contains('void _vinit_caller() {')
+}
+
 fn test_boehm_gc_header_precedes_imported_module_spawn_wrappers() {
 	os.chdir(vroot) or {}
 	test_source := os.join_path(os.vtmp_dir(), 'coutput_boehm_gc_spawn_include_order.vv')

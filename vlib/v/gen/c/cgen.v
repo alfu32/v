@@ -12388,7 +12388,7 @@ fn (mut g Gen) write_init_function() {
 		g.writeln('}')
 	}
 
-	if g.pref.is_shared {
+	if g.pref.is_shared && 'jar' !in g.pref.compile_defines {
 		// shared libraries need a way to call _vinit/2. For that purpose,
 		// provide reusable init/cleanup helpers, ensuring that all constants
 		// are initialized just once, and that they will be freed too.
